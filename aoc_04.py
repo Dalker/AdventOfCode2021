@@ -7,9 +7,6 @@ import _io  # for correct type annotation
 from typing import Union
 import numpy as np
 
-DAY = "04"
-HINTDATA = []
-
 
 class Bingo:
     """
@@ -73,7 +70,7 @@ class Bingo:
         return bingo
 
 
-def get_data(fname) -> (list[int], list[Bingo]):
+def get_data(fname: str) -> (list[int], list[Bingo]):
     """Read the day's input file and return contents as a list of ints."""
     numbers = []
     boards = []
@@ -98,7 +95,6 @@ def play_bingo(boards: list[Bingo], numbers: list[int],
                 last_winner = number, board.copy()
                 if not lose:
                     return number, board
-    print(*last_winner)
     return last_winner
 
 

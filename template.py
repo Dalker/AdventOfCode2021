@@ -8,10 +8,10 @@ DAY = "01"
 HINTDATA = []
 
 
-def get_data(day) -> list[str]:
+def get_data(fname: str) -> list[str]:
     """Read the day's input file and return contents as a list of ints."""
     try:
-        with open(f"input{day}.txt") as datafile:
+        with open(f"{fname}.txt") as datafile:
             data = [line for line in datafile]
     except FileNotFoundError:
         print("Day's data file not found. Using Hint Data instead.")
