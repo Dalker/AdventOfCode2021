@@ -10,14 +10,28 @@ HINTDATA = []
 
 def get_data(day) -> list[str]:
     """Read the day's input file and return contents as a list of ints."""
-    with open(f"input{day}.txt") as datafile:
-        data = [line for line in datafile]
+    try:
+        with open(f"input{day}.txt") as datafile:
+            data = [line for line in datafile]
+    except FileNotFoundError:
+        print("Day's data file not found. Using Hint Data instead.")
+        data = HINTDATA
     return data
+
+
+def easy(data: str) -> str:
+    """Easy problem of the day."""
+    return ""
+
+
+def hard(data: str) -> str:
+    """Hard problem of the day."""
+    return ""
 
 
 if __name__ == "__main__":
     data = get_data(DAY)
-    print("check hint 1:", )
-    print("check hint 2:", )
-    print("  solution 1:", )
-    print("  solution 2:", )
+    print("check hint 1:", easy(HINTDATA))
+    print("check hint 2:", hard(HINTDATA))
+    print("  solution 1:", easy(data))
+    print("  solution 2:", hard(data))
