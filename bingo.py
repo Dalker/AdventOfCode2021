@@ -1,6 +1,10 @@
 """
 Advent of Code - tentative pour J4.
 
+Classe Bingo utilisée effectivement lors de la résolution.
+Cette classe a été extraite du fichier principal afin de pouvoir tester
+une variante.
+
 Daniel Kessler (aka Dalker), le 2021.12.04
 """
 from typing import Union, TextIO
