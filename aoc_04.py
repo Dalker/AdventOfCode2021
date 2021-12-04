@@ -3,8 +3,7 @@ Advent of Code - tentative pour J4.
 
 Daniel Kessler (aka Dalker), le 2021.12.04
 """
-import _io  # for correct type annotation
-from typing import Union
+from typing import Union, TextIO
 import numpy as np
 
 
@@ -13,14 +12,16 @@ class Bingo:
     A bingo board.
 
     Attributes:
-    - numbers: 5x5 numpy array of ints
-    - beans: 5x5 numpy array of bool
+    - numbers: the playing card, a 5x5 numpy array of ints
+    - beans: the beans placed on the card, a 5x5 numpy array of bool
     """
 
-    def __init__(self, stream: Union[_io.TextIOWrapper, None] = None):
+    def __init__(self, stream: Union[TextIO, None] = None):
         if stream is None:
-            self.numbers = []
-            self.beans = []
+            # good practice: always initialize all documented attributes
+            # (and all public attributes should be documented in docstring)
+            self.numbers = np.array([])
+            self.beans = np.array([])
             return
         numbers = []
         for _ in range(5):
@@ -70,22 +71,8 @@ class Bingo:
         return bingo
 
 
-def get_data(fname: str) -> (list[int], list[Bingo]):
-    """Read the day's input file and return contents as a list of ints."""
-    numbers = []
-    boards = []
-    try:
-        with open(f"{fname}.txt") as datafile:
-            numbers = [int(num) for num in datafile.readline().split(",")]
-            while datafile.readline():
-                boards.append(Bingo(datafile))
-    except FileNotFoundError:
-        print("Day's data file not found. Using Hint Data instead.")
-    return numbers, boards
-
-
 def play_bingo(boards: list[Bingo], numbers: list[int],
-               lose=False) -> (int, Bingo):
+               lose=False) -> tuple[int, Bingo]:
     """Play bingo with given boards and numbers until someone wins."""
     for number in numbers:
         for board in boards:
@@ -98,7 +85,10 @@ def play_bingo(boards: list[Bingo], numbers: list[int],
     return last_winner
 
 
-def easy(data: (list[int], list[Bingo])) -> int:
+Data = tuple[list[int], list[Bingo]]  # typing for today's data
+
+
+def easy(data: Data) -> int:
     """Easy problem of the day."""
     numbers, boards = data
     winning_number, winner = play_bingo(boards, numbers)
@@ -110,8 +100,8 @@ def easy(data: (list[int], list[Bingo])) -> int:
     return winning_number * score
 
 
-def hard(data: str) -> str:
-    """Hard problem of the day."""
+def hard(data: Data) -> int:
+    """Hard problem of the day. Actually easier than easy this time!"""
     numbers, boards = data
     winning_number, winner = play_bingo(boards, numbers, lose=True)
     score = 0
@@ -120,6 +110,20 @@ def hard(data: str) -> str:
             if not winner.beans[row, col]:
                 score += number
     return winning_number * score
+
+
+def get_data(fname: str) -> Data:
+    """Read the day's input file and return contents as a list of ints."""
+    numbers = []
+    boards = []
+    try:
+        with open(f"{fname}.txt") as datafile:
+            numbers = [int(num) for num in datafile.readline().split(",")]
+            while datafile.readline():
+                boards.append(Bingo(datafile))
+    except FileNotFoundError:
+        print("Day's data file not found. Using Hint Data instead.")
+    return numbers, boards
 
 
 if __name__ == "__main__":

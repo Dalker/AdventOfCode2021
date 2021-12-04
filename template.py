@@ -12,7 +12,7 @@ def get_data(fname: str) -> list[str]:
     """Read the day's input file and return contents as a list of ints."""
     try:
         with open(f"{fname}.txt") as datafile:
-            data = [line for line in datafile]
+            data = list(datafile)
     except FileNotFoundError:
         print("Day's data file not found. Using Hint Data instead.")
         data = HINTDATA
