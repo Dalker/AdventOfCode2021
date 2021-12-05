@@ -1,5 +1,9 @@
 """
-Advent of Code - tentative pour J<n>.
+Advent of Code - tentative pour J5.
+
+Version initiale utilisée pour répondre au problème, mais très inefficace!
+En effet, trop de mémoire est employée, et il faut parcourir toutes les données
+avant de connaître les dimensions de la grille.
 
 Daniel Kessler (aka Dalker), le 2021.12.
 """
