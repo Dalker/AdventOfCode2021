@@ -3,8 +3,6 @@ Advent of Code - tentative pour J6.
 
 Daniel Kessler (aka Dalker), le 2021.12.
 """
-from copy import copy
-from collections import Counter
 
 DAY = "06"
 HINTDATA = [3, 4, 3, 1, 2]
@@ -17,21 +15,25 @@ def get_data(fname: str) -> list[int]:
     return data
 
 
-def easy(data: list[str], days: int = 80) -> int:
-    """Easy problem of the day. Abandoned. Was inneficient at first."""
+def easy(data: list[int], days: int = 80) -> int:
+    """
+    Easy problem of the day. Abandoned.
+
+    Was too inneficient, but helped visualize hint.
+    """
     for _ in range(days):
-        born = len([True for n in data if n==0])
-        future = [6 if n==0 else n-1 for n in data] + [8]*born
+        born = len([True for n in data if n == 0])
+        future = [6 if n == 0 else n-1 for n in data] + [8]*born
         data = future
         # print(data)
     return len(data)
 
 
-def count(data: list[str], days) -> int:
+def count(data: list[int], days) -> int:
     """Hard problem of the day. Have to be smarter."""
     fishcount = [0] * 9
-    for n in data:
-        fishcount[n] += 1
+    for daystospawn in data:
+        fishcount[daystospawn] += 1
     for _ in range(days):
         newfishcount = [0] * 9
         for daycount in range(1, 9):
