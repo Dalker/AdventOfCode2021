@@ -1,7 +1,7 @@
 """
 Advent of Code - tentative pour J7.
 
-Daniel Kessler (aka Dalker), le 2021.12.
+Daniel Kessler (aka Dalker), le 2021.12.07
 """
 
 DAY = "07"
