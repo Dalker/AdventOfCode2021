@@ -16,7 +16,7 @@ def get_data(fname: str) -> list[int]:
 
 
 def solve(data: list[int], part2: bool = False) -> tuple[int, int]:
-    """Hard problem of the day."""
+    """Solution for both problems of the day."""
     costs = [0] * (max(data) + 1)
     for final_position, _ in enumerate(costs):
         cost = 0
