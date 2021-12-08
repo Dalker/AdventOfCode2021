@@ -9,7 +9,7 @@ from collections import defaultdict
 DAY = "08"
 
 
-def get_data(fname: str) -> list[list[str]]:
+def get_data(fname: str) -> list[list[list[str]]]:
     """Read the day's input and return contents in adequate data structure."""
     with open(f"{fname}.txt") as datafile:
         data = [[part.split(" ")
@@ -18,25 +18,25 @@ def get_data(fname: str) -> list[list[str]]:
     return data
 
 
-def solve(data: list[list[str]]) -> int:
+def solve(data: list[list[list[str]]]) -> int:
     """Solve problem of the day."""
     unique = 0
     for line in data:
-        digits, output = line
+        _, output = line
         for digit in output:
             if len(digit) in (2, 3, 4, 7):
                 unique += 1
     return unique
 
 
-def unentangle(codes: list[str]) -> dict[str, str]:
+def unentangle(codes: list[str]) -> list[set]:
     """Find what each wire really means."""
     LENGTH2DIGIT = {2: 1, 3: 7, 4: 4, 7: 8}
-    digit2code = [None]*10
+    digit2code: list[set] = [set()]*10
     # wiring = {}
     bylength = defaultdict(list)
-    for code in codes:
-        code = set(code)
+    for rawcode in codes:
+        code = set(rawcode)
         n_segments = len(code)
         bylength[n_segments].append(code)
         if n_segments in LENGTH2DIGIT:
@@ -58,7 +58,7 @@ def unentangle(codes: list[str]) -> dict[str, str]:
     return digit2code
 
 
-def solve2(data: list[list[str]]) -> int:
+def solve2(data: list[list[list[str]]]) -> int:
     """Solve second problem of the day."""
     total = 0
     for line in data:
