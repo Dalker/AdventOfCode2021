@@ -9,16 +9,16 @@ from collections import defaultdict
 DAY = "08"
 
 
-def get_data(fname: str) -> list[list[list[str]]]:
+def get_data(fname: str) -> list[list[tuple[str, ...]]]:
     """Read the day's input and return contents in adequate data structure."""
     with open(f"{fname}.txt") as datafile:
-        data = [[part.split(" ")
+        data = [[tuple(part.split(" "))
                  for part in line.strip().split(" | ")]
                 for line in datafile]
     return data
 
 
-def solve(data: list[list[list[str]]]) -> int:
+def solve(data: list[list[tuple[str, ...]]]) -> int:
     """Solve problem of the day."""
     unique = 0
     for line in data:
@@ -29,7 +29,7 @@ def solve(data: list[list[list[str]]]) -> int:
     return unique
 
 
-def unentangle(codes: list[str]) -> list[set]:
+def unentangle(codes: tuple[str, ...]) -> list[set]:
     """Find what each wire really means."""
     LENGTH2DIGIT = {2: 1, 3: 7, 4: 4, 7: 8}
     digit2code: list[set] = [set()]*10
@@ -58,7 +58,7 @@ def unentangle(codes: list[str]) -> list[set]:
     return digit2code
 
 
-def solve2(data: list[list[list[str]]]) -> int:
+def solve2(data: list[list[tuple[str, ...]]]) -> int:
     """Solve second problem of the day."""
     total = 0
     for line in data:
