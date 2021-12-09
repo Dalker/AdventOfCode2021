@@ -22,17 +22,18 @@ def get_data(fname: str) -> list[list[int]]:
 
 def basin_size(grid: npt.NDArray, point: tuple[int, int]) -> int:
     """Get size of basin around (m, n)."""
-    unprocessed = [point]
-    basin = []
+    # use sets to avoid duplicates in case of multiple paths to same point
+    unprocessed = {point}
+    basin = set()
     while unprocessed:
         x, y = unprocessed.pop()
-        basin.append((x, y))
+        basin.add((x, y))
         value = grid[x, y]
         for (dx, dy) in ((0, 1), (0, -1), (-1, 0), (1, 0)):
             other = grid[x+dx, y+dy]
             if value < other < 9:
-                unprocessed.append((x+dx, y+dy))
-    return len(set(basin))
+                unprocessed.add((x+dx, y+dy))
+    return len(basin)
 
 
 def pad(rawdata: list[list[int]]) -> tuple[npt.NDArray, int, int]:
