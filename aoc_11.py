@@ -70,6 +70,7 @@ def step_anim(grid, image):
     """Avancer l'animation d'un frame."""
     step(grid)
     image.set_data(grid)
+    # retourner une colleciton d'"artistes" qu'il faut mettre à jour
     return image,
 
 
@@ -79,9 +80,11 @@ def visualize(octopi: npt.NDArray[int]):
     axes = fig.add_subplot()
     axes.axis("off")
     img = axes.matshow(octopi)
+    # NB sur le lambda: FuncAnimation envoie comme argument le numéro de frame,
+    # que l'on ignore, et veut en retour une collection d'artistes
     automaton = anim.FuncAnimation(fig,
                                    lambda _: step_anim(octopi, img),
-                                   frames=30, blit=True)
+                                   frames=300, blit=True)
     automaton.save("dumbo.gif", fps=10)
 
 
