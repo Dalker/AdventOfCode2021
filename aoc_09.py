@@ -36,27 +36,14 @@ def basin_size(grid: npt.NDArray, point: tuple[int, int]) -> int:
     return len(basin)
 
 
-def pad(rawdata: list[list[int]]) -> tuple[npt.NDArray, int, int]:
-    """Turn into array and pad with tens."""
-    arr = np.array(rawdata)
-    (m, n) = np.shape(arr)
-    v_pad = 10 * np.ones((m, 1),  int)
-    h_pad = 10 * np.ones((1, n+2), int)
-    arr = np.concatenate((h_pad,
-                          np.concatenate((v_pad, arr, v_pad),  axis=1),
-                          h_pad), axis=0)
-    return arr, m, n
-
-
 def solve(data: list[list[int]]) -> tuple[int, int]:
     """Solve problem of the day."""
     risk = 0
-    points, dim0, dim1 = pad(data)
+    points = np.pad(data, 1, constant_values=10)
     basin_sizes = []
-    for (i, j) in product(range(dim0), range(dim1)):
-        i, j = i+1, j+1
-        if points[i, j] < min(points[i+1, j], points[i-1, j], points[i, j-1],
-                              points[i, j+1]):
+    for (i, j) in product(*(range(1, points.shape[dim]-1) for dim in (0, 1))):
+        if points[i, j] < min(points[i-1, j], points[i+1, j],
+                              points[i, j-1], points[i, j+1]):
             risk += points[i, j] + 1
             basin_sizes.append(basin_size(points, (i, j)))
     basin_sizes = sorted(basin_sizes, reverse=True)
