@@ -8,37 +8,39 @@ from copy import deepcopy
 
 import numpy as np
 import numpy.typing as npt
-import matplotlib.pyplot as plt
-import matplotlib.animation  as anim
+# à l'heure actuelle, matplotlib ne supporte par mypy
+import matplotlib.pyplot as plt  # type: ignore
+import matplotlib.animation as anim  # type: ignore
+from matplotlib.image import AxesImage  # type: ignore
 
 DAY = "11"
 
 
-def step(energies: npt.NDArray[int]) -> npt.NDArray[int]:
+def step(energies: npt.NDArray[np.int8]):
     """Perform one step of dumbo octopus evolution."""
-    m, n = energies.shape
+    rows, cols = energies.shape
     # first,  increase each octopus' energy by 1
-    for i, j in product(range(m), range(n)):
+    for i, j in product(range(rows), range(cols)):
         energies[i, j] += 1
     # the flash as much as possible
     while any(energy > 9 for energy in energies.flatten()):
-        for x, y in product(range(m), range(n)):
-            if energies[x, y] > 9:
-                energies[x, y] = 0
-                # NB ci-dessous: [0, 0] ne pose pas de souci vu la vérif != 0
-                for dx, dy in product([-1, 0, 1], [-1, 0, 1]):
-                    # mon try...except causait plus de bugs qu'autre chose
-                    # donc je change pour une vérification d'intervalle
-                    if 0 <= x+dx < m and 0 <= y+dy < n:
-                        # on est dans la grille, on peut vérifier la valeur
-                        if energies[x+dx, y+dy] != 0:
-                            energies[x+dx, y+dy] += 1
+        for row, col in ((r, c) for r, c in product(range(rows), range(cols))
+                         if energies[r, c] > 9):
+            energies[row, col] = 0
+            for neighbour in ((row+drow, col+dcol)
+                              for drow, dcol in product([-1, 0, 1], [-1, 0, 1])
+                              if 0 <= row+drow < rows
+                              and 0 <= col+dcol < cols):
+                # on est dans la grille, on peut vérifier la valeur
+                # NB: le centre est automatiquement exclu car il a la valeur 0
+                if energies[neighbour] != 0:
+                    energies[neighbour] += 1
 
 
-def solve(octopi: npt.NDArray[int]) -> int:
+def solve(octopi: npt.NDArray[np.int8]) -> int:
     """Solve problem of the day."""
     flashes = 0
-    for n in range(100):
+    for _ in range(100):
         # print(f"step {n}")
         # print(octopi)
         step(octopi)
@@ -46,26 +48,26 @@ def solve(octopi: npt.NDArray[int]) -> int:
     return flashes
 
 
-def solve2(octopi: npt.NDArray[int]) -> int:
+def solve2(octopi: npt.NDArray[np.int8]) -> int:
     """Solve second part."""
     dim_x, dim_y = octopi.shape
-    for n in range(1000):
+    for stage in range(1000):
         step(octopi)
         if all(octopi[i, j] == octopi[0, 0]
                for (i, j) in product(range(dim_x), range(dim_y))):
-            return n+1
+            return stage + 1
     return -1
 
 
-def step_anim(grid, image):
+def step_anim(grid: npt.NDArray[np.int8], image: AxesImage):
     """Avancer l'animation d'un frame."""
     step(grid)
     image.set_data(grid)
     # retourner une colleciton d'"artistes" qu'il faut mettre à jour
-    return image,
+    return (image, )
 
 
-def visualize(octopi: npt.NDArray[int]):
+def visualize(octopi: npt.NDArray[np.int8]):
     """Visualizer 1000 pas de l'automate."""
     fig = plt.figure()
     axes = fig.add_subplot()
@@ -87,5 +89,5 @@ if __name__ == "__main__":
     print("  solution 1:", solve(deepcopy(realdata)))
     print("  solution 2:", solve2(deepcopy(realdata)))
     # faire au plus une visualisation à la fois (décommenter à choix)
-    # visualize(hintdata)
+    visualize(hintdata)
     # visualize(realdata)
