@@ -14,15 +14,6 @@ import matplotlib.animation  as anim
 DAY = "11"
 
 
-def get_data(fname: str) -> npt.NDArray[int]:
-    """Read the day's input and return contents in adequate data structure."""
-    data = []
-    with open(f"{fname}.txt") as datafile:
-        for line in datafile:
-            data.append([int(n) for n in list(line.strip())])
-    return np.array(data)
-
-
 def step(energies: npt.NDArray[int]) -> npt.NDArray[int]:
     """Perform one step of dumbo octopus evolution."""
     m, n = energies.shape
@@ -89,12 +80,12 @@ def visualize(octopi: npt.NDArray[int]):
 
 
 if __name__ == "__main__":
-    hintdata = get_data(f"hintdata{DAY}")
-    realdata = get_data(f"input{DAY}")
+    hintdata = np.genfromtxt(f"hintdata{DAY}.txt", dtype=np.int8, delimiter=1)
+    realdata = np.genfromtxt(f"input{DAY}.txt", dtype=np.int8, delimiter=1)
     print("check hint 1:", solve(deepcopy(hintdata)))
     print("check hint 2:", solve2(deepcopy(hintdata)))
     print("  solution 1:", solve(deepcopy(realdata)))
     print("  solution 2:", solve2(deepcopy(realdata)))
     # faire au plus une visualisation à la fois (décommenter à choix)
-    visualize(hintdata)
+    # visualize(hintdata)
     # visualize(realdata)
