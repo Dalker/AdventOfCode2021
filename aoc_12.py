@@ -6,7 +6,7 @@ Daniel Kessler (aka Dalker), le 2021.12.12
 from typing import Union
 from collections import defaultdict, Counter
 from itertools import combinations
-import networkx as nx
+import networkx as nx  # type: ignore
 
 DAY = "12"
 
@@ -19,15 +19,15 @@ class Maze:
                  showpaths=False):
         """Initialize maze."""
         self.showpaths = showpaths
-        self.connections = Counter()
-        self.bigrooms = defaultdict(list)
+        self.connections: dict[tuple[str, str], int] = Counter()
+        self.bigrooms: dict[str, list[str]] = defaultdict(list)
         with open(f"{fname}.txt") as datafile:
             data = list(datafile)
         self.special = special
         self.read(data)
         self.start = "start"
         self.end = "end"
-        self.graph = None
+        self.graph = nx.Graph()
         if self.DEBUG:
             self.debug()
 
@@ -59,7 +59,6 @@ class Maze:
             if self.DEBUG:
                 print("processed", bigroom)
         self.bigrooms = {}
-        self.graph = nx.Graph()
         if self.DEBUG:
             self.debug()
 
@@ -93,7 +92,7 @@ class Maze:
                 n_path *= self.graph.edges[edge]["weight"]
             n_paths += n_path
         if self.showpaths:
-            print("total paths with special", self.special, n_paths)
+            print(f"total paths with {self.special} doubled: {n_paths}")
         return n_paths
 
     def get_smallrooms(self) -> set[str]:
@@ -110,16 +109,15 @@ class Maze:
         return smallrooms
 
 
-def part2(fname: str) -> int:
+def part2(fname: str, debug=False) -> int:
     """Solve part2 of puzzle."""
-    DEBUG = False
     basic_maze = Maze(fname)
     smallrooms = basic_maze.get_smallrooms()
-    n_paths = Maze(fname, showpaths=DEBUG).solve()
+    n_paths = Maze(fname, showpaths=debug).solve()
     for smallroom in smallrooms:
-        if DEBUG:
+        if debug:
             print(f"-- doubling {smallroom} --")
-        n_paths += Maze(fname, special=smallroom, showpaths=DEBUG).solve()
+        n_paths += Maze(fname, special=smallroom, showpaths=debug).solve()
     return n_paths
 
 
@@ -130,7 +128,7 @@ if __name__ == "__main__":
     print("hintdata 3:", Maze(f"hintdata{DAY}c").solve())
     print("real data :", Maze(f"input{DAY}").solve())
     print("\nPART II")
-    print("hintdata 1:", part2(f"hintdata{DAY}"))
+    print("hintdata 1:", part2(f"hintdata{DAY}", debug=True))
     print("hintdata 2:", part2(f"hintdata{DAY}b"))
     print("hintdata 3:", part2(f"hintdata{DAY}c"))
     print("real data :", part2(f"input{DAY}"))
