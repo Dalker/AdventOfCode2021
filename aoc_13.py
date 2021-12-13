@@ -4,8 +4,6 @@ Advent of Code - tentative pour J13.
 Daniel Kessler (aka Dalker), le 2021.12.13
 """
 
-import numpy as np
-
 DAY = "13"
 
 
@@ -26,61 +24,33 @@ def get_data(fname: str) -> tuple[set[tuple[int, int]],
     return coords, instructions
 
 
-def fold_x(coords: set[tuple[int, int]], sym: int) -> set[tuple[int, int]]:
-    """Fold paper along a horizontal axis."""
-    res = set()
-    for x, y in coords:
-        if x < sym:
-            res.add((x, y))
-        else:
-            res.add((2*sym - x, y))
-    return res
-
-
-def fold_y(coords: set[tuple[int, int]], sym: int) -> set[tuple[int, int]]:
-    """Fold paper along a horizontal axis."""
-    res = set()
-    for x, y in coords:
-        if y < sym:
-            res.add((x, y))
-        else:
-            res.add((x, 2*sym - y))
-    return res
-
-
 def read(coords: set[tuple[int, int]]):
     """Read the code."""
-    x_max = max(x for x, y in coords)
-    y_max = max(y for x, y in coords)
-    print(x_max, y_max)
-    grid = [[" "] * (x_max+1) for _ in range(y_max+1)]
-    for x, y in coords:
-        grid[y][x] = "*"
-    for line in grid:
-        print("".join(line))
-        
+    x_max, y_max = max(x for x, y in coords), max(y for x, y in coords)
+    for y in range(y_max+1):
+        print("".join(["*" if (x, y) in coords else " "
+                       for x in range(x_max+1)]))
 
 
 def solve(coords: set[tuple[int, int]],
-          instructions: list[tuple[str, int]],
-          part2: bool = False) -> int:
+          instructions: list[tuple[str, int]]) -> int:
     """Solve problem of the day."""
+    answer1 = 0
     for axis, number in instructions:
         if axis == "x":
-            coords = fold_x(coords, number)
+            coords = set((x, y) if x < number else (2*number - x, y)
+                         for x, y in coords)
         else:
-            coords = fold_y(coords, number)
-        if not part2:
-            break
-    if part2:
-        read(coords)
-    return len(coords)
+            coords = set((x, y) if y < number else (x, 2*number - y)
+                         for x, y in coords)
+        if not answer1:
+            answer1 = len(coords)
+    read(coords)
+    return answer1
 
 
 if __name__ == "__main__":
     hintdata = get_data(f"hintdata{DAY}")
     realdata = get_data(f"input{DAY}")
-    print("check hint 1:", solve(*hintdata))
-    print("check hint 2:", solve(*hintdata, part2=True))
-    print("  solution 1:", solve(*realdata))
-    print("  solution 2:", solve(*realdata, part2=True))
+    print("hint part 1:", solve(*hintdata))
+    print("solution part 1:", solve(*realdata))
