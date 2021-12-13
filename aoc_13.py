@@ -28,7 +28,7 @@ def read(coords: set[tuple[int, int]]):
     """Read the code."""
     x_max, y_max = max(x for x, y in coords), max(y for x, y in coords)
     for y in range(y_max+1):
-        print("".join(["*" if (x, y) in coords else " "
+        print("".join(["▇" if (x, y) in coords else " "
                        for x in range(x_max+1)]))
 
 
