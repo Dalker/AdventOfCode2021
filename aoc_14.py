@@ -120,13 +120,13 @@ def printcount(count: dict[str, int]):
 
 def test(name: str, solver, data: tuple, steps: int):
     """Profile a given solver on a given dataset."""
+    profile = Profiler()
     print("* ", name, end=" ")
     print("solution:", solver(*data, steps), end=" ")
     profile.stamp()
 
 
 if __name__ == "__main__":
-    profile = Profiler()
     hintdata = get_data(f"hintdata{DAY}")
     realdata = get_data(f"input{DAY}")
     test("  hint, solver 1", solve, hintdata, 10)
