@@ -107,11 +107,12 @@ class Profiler:
               "-- peak mem (kB)",
               round(tracemalloc.get_traced_memory()[1] / 1000, 1))
         self.time = newtime
-        # tracemalloc.reset_peak()
+        tracemalloc.reset_peak()
 
 
 def printcount(count: dict[str, int]):
     """Print a Counter in sorted order, for debugging purposes."""
+    return  # deactivate this for now
     print(" <", end="")
     print(", ".join([str(key) + ": " + str(count[key])
                      for key in sorted(count)]), end=">\n")
@@ -119,22 +120,24 @@ def printcount(count: dict[str, int]):
 
 def test(name: str, solver, data: tuple, steps: int):
     """Profile a given solver on a given dataset."""
-    profile = Profiler()
-    print("** ", name, " **")
-    print("solution:", solver(*data, steps))
+    print("* ", name, end=" ")
+    print("solution:", solver(*data, steps), end=" ")
     profile.stamp()
 
 
 if __name__ == "__main__":
+    profile = Profiler()
     hintdata = get_data(f"hintdata{DAY}")
     realdata = get_data(f"input{DAY}")
-    test("hint, solver 1", solve, hintdata, 10)
-    test("hint, solver 2", solve2, hintdata, 10)
-    test("hint, solver 3", solve3, hintdata, 10)
-    # test("part 1, solver 1", solve, realdata, 10)
+    test("  hint, solver 1", solve, hintdata, 10)
+    test("  hint, solver 2", solve2, hintdata, 10)
+    test("  hint, solver 3", solve3, hintdata, 10)
+    test("part 1, solver 1", solve, realdata, 10)
     test("part 1, solver 2", solve2, realdata, 10)
-    # test("part 1, solver 3", solve3, realdata, 10)
-    test("part 1 + epsilon, solver 2", solve2, realdata, 15)
+    test("part 1, solver 3", solve3, realdata, 10)
+    test("part ?, solver 1", solve, realdata, 15)
+    test("part ?, solver 2", solve2, realdata, 15)
+    test("part ?, solver 3", solve3, realdata, 15)
     with cProfile.Profile() as profiler:
         solve2(*realdata, 15)
     profiler.print_stats()
