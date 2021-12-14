@@ -4,6 +4,7 @@ Advent of Code - tentative pour J14.
 Daniel Kessler (aka Dalker), le 2021.12.14
 """
 
+import cProfile
 from time import process_time
 import tracemalloc
 from collections import Counter, deque
@@ -53,16 +54,19 @@ def solve(base: str, rules: dict[str, str], steps=10) -> int:
 def solve2(base: str, rules: dict[str, str], steps=10) -> int:
     """Solve problem of the day in a smarter way (using a lot less memory)."""
     counts = Counter()
-    rest = deque((char, steps) for char in base)
-    char, level = rest.popleft()
+    # essayé avec deque et list en profilant - pas de grande différence
+    # et pour deque avec popleft/appendleft et pop/append - idem
+    rest = list((char, steps) for char in base)
+    char, level = rest.pop()
     while rest:
+        newchar = rules[rest[-1][0] + char]
         if level == 1:
             counts[char] += 1
-            counts[rules[char+rest[0][0]]] += 1
-            char, level = rest.popleft()
+            counts[newchar] += 1
+            char, level = rest.pop()
         else:
             level -= 1
-            rest.appendleft((rules[char + rest[0][0]], level))
+            rest.append((newchar, level))
     counts[char] += 1
     printcount(counts)
     return max(counts.values()) - min(counts.values())
@@ -92,7 +96,7 @@ def printcount(count: Counter):
 
 def test(name: str, solver, data, steps):
     print("** ", name, " **")
-    solver(*data, steps)
+    print("solution:", solver(*data, steps))
     profile.stamp()
 
 
@@ -104,3 +108,5 @@ if __name__ == "__main__":
     test("hint, solver 2", solve2, hintdata, 10)
     test("part 1, solver 1", solve, realdata, 10)
     test("part 1, solver 2", solve2, realdata, 10)
+    # test("part 1 + epsilon, solver 2", solve2, realdata, 20)
+    # cProfile.run("solve2(*realdata, 20)")
