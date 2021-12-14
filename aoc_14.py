@@ -93,6 +93,26 @@ def solve3(base: str, rules: dict[str, str], steps=10) -> int:
     return max(count.values()) - min(count.values())
 
 
+def solve4(base: str, rules: dict[str, str], steps=10) -> int:
+    """Solver with bottom-up approach."""
+    values = {}
+    for pair in rules:
+        values[pair] = Counter({pair[0]: 1})
+    for _ in range(steps):
+        newvalues = {}
+        for pair in rules:
+            a, b = pair
+            m = rules[pair]
+            newvalues[pair] = values[a+m] + values[m+b]
+        values = newvalues
+    final_values = Counter()
+    for a, b in zip(base[:-1], base[1:]):
+        final_values += values[a+b]
+    final_values[base[-1]] += 1
+    printcount(final_values)
+    return max(final_values.values()) - min(final_values.values())
+
+
 class Profiler:
     """Profiler for process time and memory usage."""
 
@@ -132,12 +152,16 @@ if __name__ == "__main__":
     test("  hint, solver 1", solve, hintdata, 10)
     test("  hint, solver 2", solve2, hintdata, 10)
     test("  hint, solver 3", solve3, hintdata, 10)
+    test("  hint, solver 4", solve4, hintdata, 10)
     test("part 1, solver 1", solve, realdata, 10)
     test("part 1, solver 2", solve2, realdata, 10)
     test("part 1, solver 3", solve3, realdata, 10)
+    test("part 1, solver 4", solve4, realdata, 10)
     test("part ?, solver 1", solve, realdata, 15)
     test("part ?, solver 2", solve2, realdata, 15)
     test("part ?, solver 3", solve3, realdata, 15)
-    with cProfile.Profile() as profiler:
-        solve2(*realdata, 15)
-    profiler.print_stats()
+    test("part ?, solver 4", solve4, realdata, 15)
+    test("part 2, solver 4", solve4, realdata, 40)
+    # with cProfile.Profile() as profiler:
+    #     solve2(*realdata, 15)
+    # profiler.print_stats()
