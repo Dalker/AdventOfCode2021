@@ -4,7 +4,9 @@ Advent of Code - tentative pour J14.
 Daniel Kessler (aka Dalker), le 2021.12.14
 """
 
-from collections import Counter
+from time import process_time
+import tracemalloc
+from collections import Counter, deque
 
 DAY = "14"
 
@@ -34,6 +36,7 @@ def count(chain: str) -> int:
     counts = Counter()
     for char in chain:
         counts[char] += 1
+    printcount(counts)
     max_count = max(counts[c] for c in counts)
     min_count = min(counts[c] for c in counts)
     return max_count - min_count
@@ -47,10 +50,57 @@ def solve(base: str, rules: dict[str, str], steps=10) -> int:
     return count(chain)
 
 
+def solve2(base: str, rules: dict[str, str], steps=10) -> int:
+    """Solve problem of the day in a smarter way (using a lot less memory)."""
+    counts = Counter()
+    rest = deque((char, steps) for char in base)
+    char, level = rest.popleft()
+    while rest:
+        if level == 1:
+            counts[char] += 1
+            counts[rules[char+rest[0][0]]] += 1
+            char, level = rest.popleft()
+        else:
+            level -= 1
+            rest.appendleft((rules[char + rest[0][0]], level))
+    counts[char] += 1
+    printcount(counts)
+    return max(counts.values()) - min(counts.values())
+
+
+class Profiler:
+    """Profiler for process time and memory usage."""
+
+    def __init__(self):
+        self.time = process_time()
+        tracemalloc.start()
+
+    def stamp(self):
+        newtime = process_time()
+        print(" --> time (ms):", round(1000*(newtime - self.time)),
+              "-- peak mem (kB)", round(tracemalloc.get_traced_memory()[1] / 1000, 1))
+        self.time = newtime
+        tracemalloc.reset_peak()
+
+
+def printcount(count: Counter):
+    """Print a Counter in sorted order, for debugging purposes."""
+    print(" <", end="")
+    print(", ".join([str(key) + ": " + str(count[key])
+                     for key in sorted(count)]), end=">\n")
+
+
+def test(name: str, solver, data, steps):
+    print("** ", name, " **")
+    solver(*data, steps)
+    profile.stamp()
+
+
 if __name__ == "__main__":
     hintdata = get_data(f"hintdata{DAY}")
     realdata = get_data(f"input{DAY}")
-    print("check hint 1:", solve(*hintdata))
-    # print("check hint 2:", solve(*hintdata, steps=40))
-    print("  solution 1:", solve(*realdata))
-    # print("  solution 2:", solve(*realdata, steps=40))
+    profile = Profiler()
+    test("hint, solver 1", solve, hintdata, 10)
+    test("hint, solver 2", solve2, hintdata, 10)
+    test("part 1, solver 1", solve, realdata, 10)
+    test("part 1, solver 2", solve2, realdata, 10)
