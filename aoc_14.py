@@ -72,6 +72,27 @@ def solve2(base: str, rules: dict[str, str], steps=10) -> int:
     return max(counts.values()) - min(counts.values())
 
 
+def solve3_recur(pair: str, rules: dict[str, str], count, steps: int):
+    """Recursively count characters."""
+    if steps == 0:
+        count[pair[0]] += 1
+    else:
+        a, b = pair
+        newchar = rules[pair]
+        solve3_recur(a+newchar, rules, count, steps-1)
+        solve3_recur(newchar+b, rules, count, steps-1)
+
+
+def solve3(base: str, rules: dict[str, str], steps=10) -> int:
+    """Solver based on Sébastien's hint on Discord."""
+    count = Counter()
+    for a, b in zip(base[:-1], base[1:]):
+        solve3_recur(a+b, rules, count, steps)
+    count[base[-1]] += 1
+    printcount(count)
+    return max(count.values()) - min(count.values())
+
+
 class Profiler:
     """Profiler for process time and memory usage."""
 
@@ -83,7 +104,8 @@ class Profiler:
         """Print process time and peak mem usage since creation."""
         newtime = process_time()
         print(" --> time (ms):", round(1000*(newtime - self.time)),
-              "-- peak mem (kB)", round(tracemalloc.get_traced_memory()[1] / 1000, 1))
+              "-- peak mem (kB)",
+              round(tracemalloc.get_traced_memory()[1] / 1000, 1))
         self.time = newtime
         # tracemalloc.reset_peak()
 
@@ -108,7 +130,11 @@ if __name__ == "__main__":
     realdata = get_data(f"input{DAY}")
     test("hint, solver 1", solve, hintdata, 10)
     test("hint, solver 2", solve2, hintdata, 10)
-    test("part 1, solver 1", solve, realdata, 10)
+    test("hint, solver 3", solve3, hintdata, 10)
+    # test("part 1, solver 1", solve, realdata, 10)
     test("part 1, solver 2", solve2, realdata, 10)
-    # test("part 1 + epsilon, solver 2", solve2, realdata, 20)
-    cProfile.run("solve2(*realdata, 15)")
+    # test("part 1, solver 3", solve3, realdata, 10)
+    test("part 1 + epsilon, solver 2", solve2, realdata, 15)
+    with cProfile.Profile() as profiler:
+        solve2(*realdata, 15)
+    profiler.print_stats()
