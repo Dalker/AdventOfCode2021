@@ -4,6 +4,8 @@ Advent of Code - tentative pour J16.
 Daniel Kessler (aka Dalker), le 2021.12.16
 """
 
+import operator
+from functools import reduce
 from math import prod
 from collections import deque
 
@@ -11,7 +13,9 @@ DAY = "16"
 HINTS = ("D2FE28", "38006F45291200", "EE00D40C823060", "8A004A801A8002F478",
          "620080001611562C8802118E34", "C0015000016115A2E0802F182340",
          "A0016C880162017C3686B18A3D4780")
-HINTS2 = ("C200B40A82", "880086C3E88112", "04005AC33890")
+HINTS2 = ("C200B40A82", "04005AC33890", "880086C3E88112", "CE00C43D881120",
+          "D8005AC2A8F0", "F600BC2D8F", "9C005AC2F8F0",
+          "9C0141080250320F1802104A08")
 
 
 def get_data(fname: str) -> str:
@@ -21,35 +25,27 @@ def get_data(fname: str) -> str:
     return data
 
 
-class Stream:
-    """A stream of bits."""
+class BitStream:
+    """A stream of bits produced by a hex string."""
 
     def __init__(self, transmission: str):
-        # following doesn't work with leading 0 on hex string
-        # -> might as well use a generator and do it properly
-        # bits = bin(int(transmission, 16))[2:]
-        # first_bits = len(bits) % 4
-        # pad = "" if first_bits == 0 else "0" * (4 - first_bits)
-        # self.bits = pad + bits
         self.hex_buffer = deque(transmission)
         self.bits = self._get_bit()
         self.count = 0
 
     def _get_bit(self):
-        """Generate one bit from transmission."""
+        """Generate one bits one at a time from transmission."""
         while self.hex_buffer:
-            half_octet = "{:0>4s}".format(bin(int(self.hex_buffer.popleft(), 16))[2:])
+            half_octet = "{:0>4s}".format(bin(int(self.hex_buffer.popleft(),
+                                                  16))[2:])
             for bit in half_octet:
                 yield bit
 
-    def get(self, n_bits: int) -> tuple[int, str]:
+    def get(self, n_bits: int) -> str:
         """Read some bits.
 
-        Return the integer value encoded in these bits as well as the rest
-        of the bits.
+        Return the requested amount of bits, as a str of 0s and 1s.
         """
-        # read = self.bits[:n_bits]
-        # self.bits = self.bits[n_bits:]
         read = "".join(next(self.bits) for _ in range(n_bits))
         self.count += n_bits
         return read
@@ -60,11 +56,11 @@ class Packet:
     OPNAMES = ["sum", "product", "min", "max", "literal", "greater than",
                "less than", "equal"]
     OPFUNCS = [sum, prod, min, max, None,
+               lambda v: reduce(operator.__gt__, v),
                lambda v: 1 if v[0] < v[1] else 0,
-               lambda v: 1 if v[0] > v[1] else 0,
                lambda v: 1 if v[0] == v[1] else 0]
 
-    def __init__(self, bits: Stream, level=0):
+    def __init__(self, bits: BitStream, level=0):
         self.bits = bits
         self.level = level
         self.version = int(self.bits.get(3), 2)
@@ -120,23 +116,24 @@ class Packet:
                 self._subpackets.append(Packet(self.bits, self.level+1))
 
 
-def decode(message: str, debug: bool = False) -> int:
+def decode(message: str) -> Packet:
     """Decode a BITS message."""
-    stream = Stream(message)
+    stream = BitStream(message)
     message = Packet(stream)
-    if debug:
-        print(message)
-    return message.total_versions()
+    return message
 
 
 if __name__ == "__main__":
-    for n_hint, hint in enumerate(HINTS + HINTS2):
-        print(f"* hint {n_hint + 1} : {hint} *")
-        print("TOTAL VERSIONS:", decode(hint, debug=True))
-
     realdata = get_data(f"input{DAY}")
-    print("part 1:", decode(realdata))
-
-    # print("  solution 1:", solve(realdata))
-    # print("check hint 2:", solve(hintdata, part2=True))
-    # print("  solution 2:", solve(realdata, part2=True))
+    realmessage = decode(realdata)
+    for n_hint, hint in enumerate(HINTS):
+        print(f"* hint {n_hint + 1} : {hint} *")
+        message = decode(hint)
+        # print(message)
+        print("--> Total Versions:", message.total_versions())
+    print("part 1:", realmessage.total_versions())
+    for n_hint, hint in enumerate(HINTS2):
+        print(f"* hint {n_hint + 1} : {hint} *")
+        message = decode(hint)
+        print(message)
+    print("part 2:", realmessage.value)
