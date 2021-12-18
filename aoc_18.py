@@ -54,12 +54,14 @@ class SFN:
 
     @property
     def magnitude(self):
+        """Return magnitude of the SnailFish Number."""
         if self.value is not None:
             return self.value
         return 3*self.left_child.magnitude + 2*self.right_child.magnitude
 
     @staticmethod
     def sum(terms: Iterable[str]):
+        """Add all SFNs on the iterable."""
         termsq = deque(terms)
         result = SFN.parse(termsq.popleft())
         while termsq:
@@ -67,15 +69,18 @@ class SFN:
         return result
 
     def create_pair(self):
+        """Create a pair of empty children on tree."""
         self.left_child, self.right_child = SFN(self), SFN(self)
 
-    def split(self) -> False:
+    def split(self) -> bool:
+        """Split a number into two parts."""
         current = self
         while current.left_child is not None:
             current = current.left_child
-        while current is not None and current.value < 10:
+        while current is not None and current.value < 10:  # type: ignore
             current = current.right_neighbour
         if current is not None:
+            assert current.value is not None
             current.left_child = SFN(current, current.value // 2)
             current.right_child = SFN(current, current.value // 2
                                       + current.value % 2)
@@ -91,7 +96,8 @@ class SFN:
             return True
         return False
 
-    def explode(self, level=0):
+    def explode(self, level=0) -> bool:
+        """Explode a pair, sending parts to the left and right."""
         if level == 4 and self.value is None:
             self.value = 0
             left = self.left_child.left_neighbour
@@ -136,35 +142,39 @@ class SFN:
 
 
 def test_explosion():
-    TESTS = {"[[[[[9,8],1],2],3],4]": "[[[[0,9],2],3],4]",
+    """Assert that all explosion tests work."""
+    tests = {"[[[[[9,8],1],2],3],4]": "[[[[0,9],2],3],4]",
              "[7,[6,[5,[4,[3,2]]]]]": "[7,[6,[5,[7,0]]]]",
              "[[6,[5,[4,[3,2]]]],1]": "[[6,[5,[7,0]]],3]",
              "[[3,[2,[1,[7,3]]]],[6,[5,[4,[3,2]]]]]":
              "[[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]",
              "[[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]":
              "[[3,[2,[8,0]]],[9,[5,[7,0]]]]"}
-    for before, after in TESTS.items():
+    for before, after in tests.items():
         sfn = SFN.parse(before)
         sfn.explode()
         assert repr(sfn) == after, f"explode({before}) != {after}"
 
 
 def test_sums():
+    """Perform all test sums."""
     print(SFN.sum(["[[[[4,3],4],4],[7,[[8,4],9]]]", "[1,1]"]))
     print(SFN.sum(["[1,1]", "[2,2]", "[3,3]", "[4,4]"]))
     print(SFN.sum(["[1,1]", "[2,2]", "[3,3]", "[4,4]", "[5,5]"]))
     print(SFN.sum(["[1,1]", "[2,2]", "[3,3]", "[4,4]", "[5,5]", "[6,6]"]))
-    hintdata = get_data("hintdata18a.txt")
-    print(SFN.sum(hintdata))
+    hintdatas = get_data("hintdata18a.txt")
+    print(SFN.sum(hintdatas))
 
 
 def test_magnitudes():
+    """Assert that all test magnitudes work."""
     assert SFN.parse("[9,1]").magnitude == 29
     assert SFN.parse("[[1,2],[[3,4],5]]").magnitude == 143
     assert SFN.parse("[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]").magnitude == 3488
 
 
 def max_magnitude(assignments: list[str]):
+    """Find the maximal magnitude of pairwise sums."""
     sfns = [SFN.parse(assignment) for assignment in assignments]
     return max((sfn1 + sfn2).magnitude for sfn1, sfn2 in permutations(sfns, 2))
 
