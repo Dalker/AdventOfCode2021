@@ -7,8 +7,8 @@ from __future__ import annotations
 
 from copy import copy
 from collections import Counter
-from itertools import combinations, permutations, product
-from typing import Optional
+from itertools import permutations, product
+from typing import Iterable
 
 import numpy as np
 import numpy.typing as npt
@@ -23,6 +23,7 @@ class Scanner:
         self.identity = identity
         self.beacons: list[tuple[int, ...]] = []
         self.matrix: npt.NDArray
+        self.location = np.zeros(3)
 
     def __repr__(self) -> str:
         return (self.identity + "(" + ",".join(str(beacon) for beacon in
@@ -57,6 +58,7 @@ class Scanner:
                                                   + diff[i]
                                                   for i in range(3)])
                     other.matrix = new_matrix
+                    other.location += np.array(diff)
                     return True
         return False
 
@@ -116,6 +118,14 @@ def get_data(fname: str) -> list[Scanner]:
     return scanners
 
 
+def longest_distance(scanners: list[Scanner]) -> int:
+    """Find longest Manhattan distance between two scanners."""
+    def manhattan(a: Iterable, b: Iterable):
+        return sum(abs(a[i] - b[i]) for i in range(len(a)))
+    return max(manhattan(s1.location, s2.location)
+               for s1, s2 in permutations(scanners, 2))
+
+
 def solve(scanners: list[Scanner]) -> int:
     """Solve problem of the day."""
     not_adjusted = list(range(1, len(scanners)))
@@ -136,7 +146,7 @@ def solve(scanners: list[Scanner]) -> int:
             beacon = list(scanner.matrix[n_beacon, :])
             if beacon not in beacons:
                 beacons.append(beacon)
-    return len(beacons)
+    return len(beacons), longest_distance(scanners)
 
 
 if __name__ == "__main__":
@@ -144,5 +154,3 @@ if __name__ == "__main__":
     realdata = get_data("input19.txt")
     print("check hint 1:", solve(hintdata))
     print("  solution 1:", solve(realdata))  # 329 was too low!
-    # print("check hint 2:", solve(hintdata, part2=True))
-    # print("  solution 2:", solve(realdata, part2=True))
