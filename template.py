@@ -4,6 +4,8 @@ Advent of Code - tentative pour J<n>.
 Daniel Kessler (aka Dalker), le 2021.12.<n>
 """
 
+from ast import literal_eval
+
 
 def get_data(fname: str) -> list[str]:
     """Read the day's input and return contents in adequate data structure."""
