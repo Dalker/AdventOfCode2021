@@ -51,7 +51,6 @@ class Scanner:
                                 for i in range(3))] += 1
             for diff, freq in diff_freq.items():
                 if freq >= 12:
-                    # print(dims, signs, diff)
                     new_matrix = np.column_stack([signs[i]
                                                   * other.matrix[:, dims[i]]
                                                   + diff[i]
