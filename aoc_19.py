@@ -5,11 +5,15 @@ Daniel Kessler (aka Dalker), le 2021.12.19
 """
 from __future__ import annotations
 
+from copy import copy
 from collections import Counter
 from itertools import combinations, permutations, product
+from typing import Optional
 
 import numpy as np
 import numpy.typing as npt
+
+Triplet = [int, int, int]
 
 
 class Scanner:
@@ -36,21 +40,63 @@ class Scanner:
         """Add data about one beacon."""
         self.beacons.append(coords)
 
-    def overlaps(self, other: Scanner):
-        """Check for overlap of beacons."""
-        self_col = self.matrix[:, 0]
-        for dim, sign in product(range(3), (-1, +1)):
-            other_col = sign * other.matrix[:, dim]
-            diff_freq: dict[int, int] = Counter()
-            for a, b in product(self_col, other_col):
-                diff_freq[b - a] += 1
-            for diff in diff_freq:
-                if diff_freq[diff] >= 12:
-                    return (dim, sign, diff, diff_freq[diff])
-                    print(f"found >= 12 overlaps between {self.identity} "
-                          f"and {other.identity} "
-                          f"using params {dim}, {sign}, {diff}")
-        return None
+    def overlaps(self, other: Scanner) -> bool:
+        """Check for overlap of beacons, adjusting other if possible."""
+        for dims, signs in product(permutations(range(3)),
+                                   product((-1, +1), repeat=3)):
+            diff_freq: dict[tuple[int, ...], int] = Counter()
+            for m, n in product(range(self.n_beacons), range(other.n_beacons)):
+                diff_freq[tuple([self.matrix[m, i]
+                                 - signs[i] * other.matrix[n, dims[i]]
+                                 for i in range(3)])] += 1
+            for diff, freq in diff_freq.items():
+                if freq >= 12:
+                    # print(dims, signs, diff)
+                    new_matrix = np.column_stack([signs[i]
+                                                  * other.matrix[:, dims[i]]
+                                                  + diff[i]
+                                                  for i in range(3)])
+                    other.matrix = new_matrix
+                    return True
+        return False
+
+    def adjust(self, other: Scanner, dim: int, sign: int, diff: int):
+        """DEPRECATED - Adjust another scanner to show same coords as self."""
+        other.matrix[:, [0, dim]] = other.matrix[:, [dim, 0]]
+        other.matrix[:, 0] *= sign
+        other.matrix[:, 0] -= diff
+        for n, m in product(range(self.n_beacons), range(other.n_beacons)):
+            choices = product((-1, 1), (1, 2))
+            prevdiff = [0] * 4
+            newdiff = [0] * 4
+            if self.matrix[n, 0] == other.matrix[m, 0]:
+                for index, choice in enumerate(choices):
+                    sign, dim = choice
+                    newdiff[index] = self.matrix[n, 1] - sign * other.matrix[m, dim]
+                    if newdiff[index] == prevdiff[index]:
+                        diff = newdiff[index]
+                        break
+                    else:
+                        prevdiff[index] = newdiff[index]
+                other.matrix[:, [1, dim]] = other.matrix[:, [dim, 1]]
+                other.matrix[:, 1] *= sign
+                other.matrix[:, 1] += diff
+                break
+        for n, m in product(range(self.n_beacons), range(other.n_beacons)):
+            signs = (-1, 1)
+            prevdiff = [0] * 2
+            newdiff = [0] * 2
+            if self.matrix[n, 0] == other.matrix[m, 0]:
+                for index, sign in enumerate(signs):
+                    newdiff[index] = self.matrix[n, 2] - sign * other.matrix[m, 2]
+                    if newdiff[index] == prevdiff[index]:
+                        diff = newdiff[index]
+                        break
+                    else:
+                        prevdiff[index] = newdiff[index]
+                other.matrix[:, 2] *= sign
+                other.matrix[:, 2] += diff
+                break
 
 
 def get_data(fname: str) -> list[Scanner]:
@@ -72,12 +118,25 @@ def get_data(fname: str) -> list[Scanner]:
 
 def solve(scanners: list[Scanner]) -> int:
     """Solve problem of the day."""
-    n_scanners = len(scanners)
-    for m, n in combinations(range(n_scanners), 2):
-        overlaps = scanners[m].overlaps(scanners[n])
-        if overlaps is not None:
-            print("overlaps between scanners", m, n, overlaps)
-    return n_beacons
+    not_adjusted = list(range(1, len(scanners)))
+    queue = [0]
+    current = 0
+    while queue:
+        for other in copy(not_adjusted):
+            if scanners[current].overlaps(scanners[other]):
+                print("overlaps between scanners", current, "and", other)
+                # scanners[current].adjust(scanners[other], *overlaps)
+                not_adjusted.remove(other)
+                queue.append(other)
+        current = queue.pop()
+    assert not_adjusted == []
+    beacons = []
+    for scanner in scanners:
+        for n_beacon in range(scanner.n_beacons):
+            beacon = list(scanner.matrix[n_beacon, :])
+            if beacon not in beacons:
+                beacons.append(beacon)
+    return len(beacons)
 
 
 if __name__ == "__main__":
