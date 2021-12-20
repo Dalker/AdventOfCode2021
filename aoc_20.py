@@ -9,9 +9,9 @@ from typing import Callable
 
 import numpy as np
 import numpy.typing as npt
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt  # type: ignore
 
-Map = npt.NDArray[str]
+Map = npt.NDArray[np.str_]
 
 
 def get_data(fname: str) -> tuple[str, Map]:
@@ -61,12 +61,12 @@ def ascii_print(image: Map) -> None:
 
 def mp_show(image: Map) -> None:
     """Show image on matplotlib plot."""
-    _, ax = plt.subplots()
-    ax.matshow(image)
+    _, axes = plt.subplots()
+    axes.matshow(image)
     plt.show()
 
 
-def solve(decoder: str, image: Map, n_enhancements=2) -> int:
+def solve(decoder: str, image: Map, n_enhancements: int = 2) -> int:
     """Solve problem of the day."""
     decode = get_decode()
     for _ in range(n_enhancements):
