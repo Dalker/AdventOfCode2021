@@ -46,25 +46,30 @@ RESULT_COUNT = {3: 1, 4: 3, 5: 6, 6: 7, 7: 6, 8: 3, 9: 1}
 
 def dirac(positions: list[int]) -> int:
     """Solve the real problem of the day."""
-    universes = {(0, 0, 0, 0): 1}  # pos0-1, pos1-1, score0, score1: count
-    turn = 0
+    # universe = {(pos0-1, pos1-1, score0, score1): count}
+    universes = {(positions[0]-1, positions[1]-1, 0, 0): 1}
+    turn = 0  # whose player's turn it is to play next
     while any(score[2] < 21 and score[3] < 21 for score in universes):
-        new_universes = Counter()
+        new_universes = Counter()  # nb universes for each new configuration
         for universe, count1 in universes.items():
             pos0, pos1, score0, score1 = universe
+            if score0 >= 21 or score1 >= 21:
+                # someone already won in this configuration
+                new_universes[universe] = count1
+                continue
             for result, count2 in RESULT_COUNT.items():
-                if score0 >= 21 or score1 >= 21:
-                    new_universes[universe] = score1
-                elif turn == 0:
+                # player who has turn moves by result of 3 dirac dice rolls
+                new_count = count1 * count2
+                if turn == 0:
                     new_pos0 = (pos0 + result) % 10
                     new_score0 = score0 + new_pos0 + 1
                     new_universes[(new_pos0, pos1,
-                                   new_score0, score1)] += count1*count2
+                                   new_score0, score1)] += new_count
                 else:
                     new_pos1 = (pos1 + result) % 10
                     new_score1 = score1 + new_pos1 + 1
                     new_universes[(pos0, new_pos1,
-                                   score0, new_score1)] += count1*count2
+                                   score0, new_score1)] += new_count
         universes = new_universes
         turn = (turn+1) % 2
     wins0 = sum(count for score, count in universes.items() if score[2] >
