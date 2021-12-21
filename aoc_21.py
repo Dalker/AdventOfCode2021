@@ -46,20 +46,31 @@ RESULT_COUNT = {3: 1, 4: 3, 5: 6, 6: 7, 7: 6, 8: 3, 9: 1}
 
 def dirac(positions: list[int]) -> int:
     """Solve the real problem of the day."""
-    # count of nb of universes with each score
-    scores = {(0, 0): 1}
+    universes = {(0, 0, 0, 0): 1}  # pos0-1, pos1-1, score0, score1: count
     turn = 0
-    while any(score[0] < 21 and score[1] < 21 for score in scores):
-        new_scores = Counter()
-        for score, count1 in scores.items():
+    while any(score[2] < 21 and score[3] < 21 for score in universes):
+        new_universes = Counter()
+        for universe, count1 in universes.items():
+            pos0, pos1, score0, score1 = universe
             for result, count2 in RESULT_COUNT.items():
-                new_score0 = score[0] + result if turn == 0 else score[0]
-                new_score1 = score[1] + result if turn == 1 else score[1]
-                new_scores[(new_score0, new_score1)] += count1*count2
-        scores = new_scores
+                if score0 >= 21 or score1 >= 21:
+                    new_universes[universe] = score1
+                elif turn == 0:
+                    new_pos0 = (pos0 + result) % 10
+                    new_score0 = score0 + new_pos0 + 1
+                    new_universes[(new_pos0, pos1,
+                                   new_score0, score1)] += count1*count2
+                else:
+                    new_pos1 = (pos1 + result) % 10
+                    new_score1 = score1 + new_pos1 + 1
+                    new_universes[(pos0, new_pos1,
+                                   score0, new_score1)] += count1*count2
+        universes = new_universes
         turn = (turn+1) % 2
-    wins0 = sum(count for score, count in scores.items() if score[0] > score[1])
-    wins1 = sum(count for score, count in scores.items() if score[0] < score[1])
+    wins0 = sum(count for score, count in universes.items() if score[2] >
+                score[3])
+    wins1 = sum(count for score, count in universes.items() if score[2] <
+                score[3])
     return wins0, wins1
 
 
