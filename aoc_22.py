@@ -8,6 +8,7 @@ from __future__ import annotations  # waiting for python 3.10
 
 import re
 
+from copy import copy
 from dataclasses import dataclass, replace
 from itertools import product
 from math import prod
@@ -102,6 +103,7 @@ def solve2(data: list[tuple[bool, Cuboid]]) -> int:
     """Solve part 2."""
     on_cubes = []
     for on_off, cube in data:
+        new_on_cubes = copy(on_cubes)
         if on_off:  # got an "on" cuboid
             on_cubes.append(cube)
         else:  # got an "off" cuboid
@@ -109,8 +111,9 @@ def solve2(data: list[tuple[bool, Cuboid]]) -> int:
                 intersection = cube.inter(on_cube)
                 if intersection is not None:
                     # subtract the part that was turned off
-                    on_cubes.remove(on_cube)
-                    on_cubes.extend(on_cube.minus(intersection))
+                    new_on_cubes.remove(on_cube)
+                    new_on_cubes.extend(on_cube.minus(intersection))
+                on_cubes = new_on_cubes
     return sum(cube.volume for cube in on_cubes)
 
 
