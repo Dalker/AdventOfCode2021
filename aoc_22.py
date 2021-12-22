@@ -7,7 +7,8 @@ Daniel Kessler (aka Dalker), le 2021.12.22
 from __future__ import annotations  # waiting for python 3.10
 
 import re
-from dataclasses import dataclass
+
+from dataclasses import dataclass, replace
 from itertools import product
 from math import prod
 from typing import Optional
@@ -36,45 +37,34 @@ class Cuboid:
             return None
         return Cuboid(min_coords, max_coords)
 
-    def minus_inter(self, inter: Cuboid) -> list[Cuboid]:
-        """
-        Give cuboids corresponding to self minus inter.
+    @staticmethod
+    def bisect(original, axis: int, cutoff: int) -> tuple[Cuboid, Cuboid]:
+        """Slice cuboid along given axis and return two sub-cuboids."""
+        new_min_coords = list(original.min_coords)
+        new_min_coords[axis] = cutoff
+        new_max_coords = list(original.max_coords)
+        new_max_coords[axis] = cutoff
+        return (replace(original, max_coords=tuple(new_max_coords)),
+                replace(original, min_coords=tuple(new_min_coords)))
 
-        Constraint: inter must be a cuboid within self, at one of its
+    def minus(self, corner: Cuboid) -> list[Cuboid]:
+        """
+        Return cuboids adding up to self minus removed corner.
+
+        Constraint: corner must be a cuboid within self, at one of its
         corners.
         """
-        floor_min_z = inter.min_coords[2]
-        front_min_y = inter.min_coords[1]
-        if self.min_coords[2] == inter.min_coords[2]:
-            floor_max_z = inter.max_coords[2]
-            rest_z = Cuboid((self.min_coords[0],
-                             self.min_coords[1],
-                             floor_max_z), self.max_coords)
-        else:
-            floor_max_z = self.max_coords[2]
-            rest_z = Cuboid((self.min_coords,
-                             (self.max_coords[0],
-                              self.max_coords[1],
-                              floor_min_z)))
-        if self.min_coords[1] == inter.min_coords[1]:
-            front_max_y = inter.max_coords[1]
-            rest_y = Cuboid((self.min_coords[0],
-                             front_max_y, floor_min_z),
-                            (self.max_coords[0], self.max_coords[1],
-                             floor_max_z))
-        else:
-            front_max_y = self.max_coords[1]
-            rest_y = Cuboid((self.min_coords[0], self.min_coords[1],
-                             floor_min_z),
-                            (self.min_coords[0],
-                             front_min_y, floor_max_z))
-        if self.min_coords[0] == inter.min_coords[0]:
-            rest_x = Cuboid((inter.max_coords[0], front_min_y, floor_min_z),
-                            (self.max_coords[0], front_max_y, floor_max_z))
-        else:
-            rest_x = Cuboid((self.min_coords[0], front_min_y, floor_min_z),
-                            (inter.min_coords[0], front_max_y, floor_max_z))
-        return [rest_x, rest_y, rest_z]
+        to_slice = self
+        kept = []
+        for dim in range(3):
+            if self.min_coords[dim] == corner.min_coords[dim]:
+                to_slice, to_keep = Cuboid.bisect(to_slice, dim,
+                                                  corner.max_coords[dim])
+            else:
+                to_keep, to_slice = Cuboid.bisect(to_slice, dim,
+                                                  corner.min_coords[dim])
+            kept.append(to_keep)
+        return kept
 
 
 def get_data(fname: str) -> list[tuple[bool, Cuboid]]:
@@ -111,24 +101,17 @@ def solve(data: list[tuple[bool, Cuboid]]) -> int:
 def solve2(data: list[tuple[bool, Cuboid]]) -> int:
     """Solve part 2."""
     on_cubes = []
-    off_cubes = []  # cubes that must be subtracted from ons
     for on_off, cube in data:
         if on_off:  # got an "on" cuboid
             on_cubes.append(cube)
-            for off_cube in off_cubes:
-                intersection = cube.inter(off_cube)
-                if intersection is not None:
-                    # compensate an existing subtraction
-                    on_cubes.append(intersection)
         else:  # got an "off" cuboid
             for on_cube in on_cubes:
                 intersection = cube.inter(on_cube)
                 if intersection is not None:
                     # subtract the part that was turned off
-                    off_cubes.append(intersection)
-    print(len(on_cubes), len(off_cubes))
-    return (sum(cube.volume for cube in on_cubes)
-            - sum(cube.volume for cube in off_cubes))
+                    on_cubes.remove(on_cube)
+                    on_cubes.extend(on_cube.minus(intersection))
+    return sum(cube.volume for cube in on_cubes)
 
 
 if __name__ == "__main__":
