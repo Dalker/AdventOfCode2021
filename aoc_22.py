@@ -48,24 +48,17 @@ class Cuboid:
         return (replace(original, max_coords=tuple(new_max_coords)),
                 replace(original, min_coords=tuple(new_min_coords)))
 
-    def minus(self, corner: Cuboid) -> list[Cuboid]:
-        """
-        Return cuboids adding up to self minus removed corner.
-
-        Constraint: corner must be a cuboid within self, at one of its
-        corners.
-        """
+    def minus(self, inner: Cuboid) -> list[Cuboid]:
+        """Return cuboids adding up to self minus an inner cuboid."""
         to_slice = self
-        kept = []
+        parts = []
         for dim in range(3):
-            if self.min_coords[dim] == corner.min_coords[dim]:
-                to_slice, to_keep = Cuboid.bisect(to_slice, dim,
-                                                  corner.max_coords[dim])
-            else:
-                to_keep, to_slice = Cuboid.bisect(to_slice, dim,
-                                                  corner.min_coords[dim])
-            kept.append(to_keep)
-        return kept
+            left, to_slice = Cuboid.bisect(to_slice, dim,
+                                           inner.min_coords[dim])
+            to_slice, right = Cuboid.bisect(to_slice, dim,
+                                            inner.max_coords[dim])
+            parts.extend([left, right])
+        return [part for part in parts if part.volume != 0]
 
 
 def get_data(fname: str) -> list[tuple[bool, Cuboid]]:
@@ -103,10 +96,19 @@ def solve2(data: list[tuple[bool, Cuboid]]) -> int:
     """Solve part 2."""
     on_cubes = []
     for on_off, cube in data:
-        new_on_cubes = copy(on_cubes)
         if on_off:  # got an "on" cuboid
-            on_cubes.append(cube)
+            new_cubes = [cube]
+            for on_cube in on_cubes:
+                new_new_cubes = copy(new_cubes)
+                for new_cube in new_cubes:
+                    intersection = new_cube.inter(on_cube)
+                    if intersection is not None:
+                        new_new_cubes.remove(new_cube)
+                        new_new_cubes.extend(new_cube.minus(on_cube))
+                new_cubes = new_new_cubes
+            on_cubes.extend(new_cubes)
         else:  # got an "off" cuboid
+            new_on_cubes = copy(on_cubes)
             for on_cube in on_cubes:
                 intersection = cube.inter(on_cube)
                 if intersection is not None:
