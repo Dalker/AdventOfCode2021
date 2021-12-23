@@ -38,15 +38,23 @@ class Cuboid:
             return None
         return Cuboid(min_coords, max_coords)
 
+    def intersects(self, other: Cuboid) -> bool:
+        """Determine if there is an intersection, without computing it."""
+        if any(max(self.min_coords[dim], other.min_coords[dim])
+               > min(self.max_coords[dim], other.max_coords[dim])
+               for dim in range(3)):
+            return False
+        return True
+
     @staticmethod
     def bisect(original, axis: int, cutoff: int) -> tuple[Cuboid, Cuboid]:
         """Slice cuboid along given axis and return two sub-cuboids."""
-        new_min_coords = list(original.min_coords)
-        new_min_coords[axis] = cutoff
-        new_max_coords = list(original.max_coords)
-        new_max_coords[axis] = cutoff
-        return (replace(original, max_coords=tuple(new_max_coords)),
-                replace(original, min_coords=tuple(new_min_coords)))
+        new_min_coords = tuple(cutoff if i == axis else original.min_coords[i]
+                               for i in range(3))
+        new_max_coords = tuple(cutoff if i == axis else original.max_coords[i]
+                               for i in range(3))
+        return (replace(original, max_coords=new_max_coords),
+                replace(original, min_coords=new_min_coords))
 
     def minus(self, inner: Cuboid) -> list[Cuboid]:
         """Return cuboids adding up to self minus an inner cuboid."""
@@ -92,13 +100,16 @@ def solve(data: list[tuple[bool, Cuboid]]) -> int:
     return cubes.sum()
 
 
-def solve2(data: list[tuple[bool, Cuboid]]) -> int:
+def solve2a(data: list[tuple[bool, Cuboid]]) -> int:
     """Solve part 2."""
     on_cubes = []
     for on_off, cube in data:
+        print("on" if on_off else "off", len(on_cubes))
         if on_off:  # got an "on" cuboid
             new_cubes = [cube]
             for on_cube in on_cubes:
+                if not on_cube.inter(cube):
+                    continue
                 new_new_cubes = copy(new_cubes)
                 for new_cube in new_cubes:
                     intersection = new_cube.inter(on_cube)
@@ -106,6 +117,7 @@ def solve2(data: list[tuple[bool, Cuboid]]) -> int:
                         new_new_cubes.remove(new_cube)
                         new_new_cubes.extend(new_cube.minus(on_cube))
                 new_cubes = new_new_cubes
+                print(len(new_cubes), "new cubes")
             on_cubes.extend(new_cubes)
         else:  # got an "off" cuboid
             new_on_cubes = copy(on_cubes)
@@ -115,8 +127,57 @@ def solve2(data: list[tuple[bool, Cuboid]]) -> int:
                     # subtract the part that was turned off
                     new_on_cubes.remove(on_cube)
                     new_on_cubes.extend(on_cube.minus(intersection))
-                on_cubes = new_on_cubes
+            on_cubes = new_on_cubes
     return sum(cube.volume for cube in on_cubes)
+
+
+def solve2b(data: list[tuple[bool, Cuboid]]) -> int:
+    """Another take on part 2."""
+    # first we discover all useful coordinates
+    coords = [[], [], []]
+    for _, cube in data:
+        for dim in range(3):
+            coords[dim].extend([cube.min_coords[dim], cube.max_coords[dim]])
+    coords = [sorted(coord) for coord in coords]
+    cuboids = []
+    for enums in product(*(enumerate(coords[dim][:-1]) for dim in range(3))):
+        low_bounds = tuple(enum[1] for enum in enums)
+        hi_bounds = tuple(coords[dim][enum[0]+1]
+                          for dim, enum in enumerate(enums))
+        cuboids.append(Cuboid(low_bounds, hi_bounds))
+    on_cuboids = []
+    for on_off, cube in reversed(data):
+        remaining_cuboids = copy(cuboids)
+        print(len(cuboids), "remaining cuboids")
+        for cuboid in cuboids:
+            if cube.intersects(cuboid):
+                remaining_cuboids.remove(cuboid)
+                if on_off:
+                    on_cuboids.add(cuboid)
+        cuboids = remaining_cuboids
+    volume = sum(cuboid.volume for cuboid in on_cuboids)
+    return volume
+
+
+def solve2c(data: list[tuple[bool, Cuboid]]) -> int:
+    """Yet another take on part 2."""
+    on_cuboids = []
+    off_cuboids = []
+    for on_off, cube in reversed(data):  # reversed time: fixed by last action
+        print(len(on_cuboids), len(off_cuboids))
+        print("on" if on_off else "off", cube)
+        if on_off:  # cube is "on" except bits that are already fixed
+            on_bits = [cube]
+            for fixed_cube in off_cuboids + on_cuboids:
+                if fixed_cube.intersects(cube):
+                    new_on_bits = []
+                    for bit in on_bits:
+                        new_on_bits.extend(bit.minus(fixed_cube))
+                    on_bits = new_on_bits
+            on_cuboids.extend(on_bits)
+        else:  # cube is "off": affects anything from the past
+            off_cuboids.append(cube)
+    return sum(cuboid.volume for cuboid in on_cuboids)
 
 
 if __name__ == "__main__":
@@ -125,5 +186,5 @@ if __name__ == "__main__":
     realdata = get_data("input22.txt")
     print("check hint 1:", solve(hintdata1))
     print("  solution 1:", solve(realdata))
-    print("check hint 2:", solve2(hintdata2))
+    print("check hint 2:", solve2c(hintdata1))
     print("check hint 2:", 2758514936282235)
