@@ -47,7 +47,7 @@ def step(grid: npt.NDArray) -> tuple[npt.NDArray, bool]:
     return newgrid, moved
 
 
-def solve(grid: list[str]) -> int:
+def solve(grid: npt.NDArray) -> int:
     """Solve problem of the day."""
     num = 0
     moved = True
